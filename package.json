@@ -24,6 +24,7 @@
     "@react-navigation/native-stack": "^7.1.13",
     "expo": "^53.0.4",
     "expo-asset": "~11.1.4",
+    "expo-audio": "^0.4.8",
     "expo-dev-client": "~5.1.7",
     "expo-splash-screen": "~0.30.7",
     "expo-system-ui": "~5.0.6",
