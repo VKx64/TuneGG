@@ -3,12 +3,89 @@ import { StyleSheet, View, Alert, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { AudioModule } from 'expo-audio';
 import MicrophoneStreamModule, { AudioBuffer } from '../../../modules/microphone-stream';
+import DSPModule from '../../../specs/NativeDSPModule';
+
+// Pitch detection parameters
+const BUF_SIZE = 9000;
+const MIN_FREQ = 30;
+const MAX_FREQ = 500;
+const THRESHOLD_DEFAULT = 0.15;
+
+// Note conversion utilities
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
+const OCTAVE_NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+export type NoteName = (typeof NOTE_NAMES)[number];
+export type OctaveNumber = (typeof OCTAVE_NUMBERS)[number];
+export type Note = { name: NoteName; octave: OctaveNumber };
+
+/**
+ * Get nearest note name and octave from a given frequency.
+ * @param frequency Frequency in Hz.
+ * @returns name and octave of the note.
+ */
+function getNoteFromFreq(frequency: number): Note | undefined {
+  if (frequency <= 0) return undefined;
+
+  // Use A4 = 440Hz as reference
+  const a4_frequency = 440;
+  const semitonesFromA4 = 12 * Math.log2(frequency / a4_frequency);
+
+  // Octaves start in C, calculate semitones from C4
+  const semitonesFromC4 = Math.round(semitonesFromA4 + 9);
+
+  // Determine the note and octave
+  const noteIndex = ((semitonesFromC4 % 12) + 12) % 12;
+  const octave = 4 + Math.floor(semitonesFromC4 / 12); // Adjust octave
+
+  return { name: NOTE_NAMES[noteIndex], octave: octave as OctaveNumber };
+}
+
+/**
+ * Calculates the frequency of a note given its name and octave.
+ * @param note The name and octave of the note.
+ * @returns The frequency of the note in Hz.
+ */
+function getFreqFromNote(note: Note | undefined): number {
+  if (!note) return 0;
+
+  const a4_frequency = 440;
+
+  // Calculate the semitone offset from A4
+  const noteDistance = NOTE_NAMES.indexOf(note.name) - NOTE_NAMES.indexOf("A");
+  const semitonesFromA4 = (note.octave - 4) * 12 + noteDistance;
+
+  // freq = ref^(semitones / 12)
+  return a4_frequency * Math.pow(2, semitonesFromA4 / 12);
+}
+
+/**
+ * Calculate cents deviation from the nearest note
+ * @param frequency Frequency in Hz
+ * @returns cents deviation (positive = sharp, negative = flat)
+ */
+function getNoteCents(frequency: number): number {
+  if (frequency <= 0) return 0;
+
+  const note = getNoteFromFreq(frequency);
+  if (!note) return 0;
+
+  const noteFreq = getFreqFromNote(note);
+  const cents = 1200 * Math.log2(frequency / noteFreq);
+
+  return Math.round(cents);
+}
 
 export function Home() {
   const [micAccess, setMicAccess] = useState<"pending" | "granted" | "denied">("pending");
   const [isRecording, setIsRecording] = useState(false);
   const [lastBufferSize, setLastBufferSize] = useState(0);
   const [sampleRate, setSampleRate] = useState(0);
+  const [audioBuffer, setAudioBuffer] = useState<number[]>(() => new Array(BUF_SIZE).fill(0));
+  const [bufferId, setBufferId] = useState(0);
+  const [pitch, setPitch] = useState(-1);
+  const [note, setNote] = useState<Note | undefined>(undefined);
+  const [cents, setCents] = useState<number>(0);
 
   // Request microphone permission
   useEffect(() => {
@@ -29,6 +106,34 @@ export function Home() {
     })();
   }, []);
 
+  // Get pitch of the audio
+  useEffect(() => {
+    if (!audioBuffer.length || micAccess !== "granted" || !isRecording) return;
+
+    // Set sampleRate after first audio buffer
+    let sr = sampleRate;
+    if (!sr) {
+      sr = MicrophoneStreamModule.getSampleRate();
+      console.log(`Setting sample rate to ${sr}Hz`);
+      setSampleRate(sr);
+    }
+
+    // Estimate pitch using DSP module
+    const detectedPitch = DSPModule.pitch(audioBuffer, sr, MIN_FREQ, MAX_FREQ, THRESHOLD_DEFAULT);
+    console.log(`Detected pitch: ${detectedPitch.toFixed(1)}Hz`);
+    setPitch(detectedPitch);
+
+    // Convert pitch to note
+    const detectedNote = getNoteFromFreq(detectedPitch);
+    const detectedCents = getNoteCents(detectedPitch);
+    setNote(detectedNote);
+    setCents(detectedCents);
+
+    if (detectedPitch > 0 && detectedNote) {
+      console.log(`Note: ${detectedNote.name}${detectedNote.octave}, Cents: ${detectedCents > 0 ? '+' : ''}${detectedCents}`);
+    }
+  }, [audioBuffer, sampleRate, micAccess, isRecording, bufferId]);
+
   // Start/stop recording
   const toggleRecording = () => {
     if (!isRecording && micAccess === "granted") {
@@ -45,6 +150,11 @@ export function Home() {
           (buffer: AudioBuffer) => {
             console.log("Received audio buffer with", buffer.samples.length, "samples");
             setLastBufferSize(buffer.samples.length);
+
+            // Append new audio samples to the end of the buffer
+            const len = buffer.samples.length;
+            setAudioBuffer((prevBuffer) => [...prevBuffer.slice(len), ...buffer.samples]);
+            setBufferId((prevId) => prevId + 1);
           }
         );
 
@@ -78,6 +188,15 @@ export function Home() {
           <Text>Recording: {isRecording ? "Yes" : "No"}</Text>
           <Text>Last Buffer Size: {lastBufferSize} samples</Text>
           <Text>Buffers per second: {MicrophoneStreamModule.BUF_PER_SEC}</Text>
+          <Text>Detected Pitch: {pitch > 0 ? `${pitch.toFixed(1)}Hz` : "No pitch detected"}</Text>
+          <Text style={styles.noteText}>
+            Detected Note: {note ? `${note.name}${note.octave}` : "No note"}
+          </Text>
+          {pitch > 0 && note && (
+            <Text style={[styles.centsText, cents > 10 ? styles.sharp : cents < -10 ? styles.flat : styles.inTune]}>
+              Tuning: {cents > 0 ? `+${cents}` : cents} cents {cents > 10 ? '(sharp)' : cents < -10 ? '(flat)' : '(in tune)'}
+            </Text>
+          )}
 
           <TouchableOpacity
             style={styles.button}
@@ -127,5 +246,23 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '500',
+  },
+  noteText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  centsText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  inTune: {
+    color: '#4CAF50', // Green
+  },
+  sharp: {
+    color: '#FF9800', // Orange
+  },
+  flat: {
+    color: '#2196F3', // Blue
   },
 });
