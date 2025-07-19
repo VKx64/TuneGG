@@ -20,21 +20,13 @@ export function App() {
 
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
 
+  React.useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
   return (
     <AuthProvider>
-      <Navigation
-        theme={theme}
-        linking={{
-          enabled: 'auto',
-          prefixes: [
-            // Change the scheme to match your app's scheme defined in app.json
-            'helloworld://',
-          ],
-        }}
-        onReady={() => {
-          SplashScreen.hideAsync();
-        }}
-      />
+      <Navigation />
     </AuthProvider>
   );
 }

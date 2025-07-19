@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AudioModule } from 'expo-audio';
 import MicrophoneStreamModule, { AudioBuffer } from '../../../modules/microphone-stream';
 import DSPModule from '../../../specs/NativeDSPModule';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Pitch detection parameters
 const BUF_SIZE = 9000;
@@ -77,6 +78,7 @@ function getNoteCents(frequency: number): number {
 }
 
 export function Home() {
+  const { user, logout } = useAuth();
   const [micAccess, setMicAccess] = useState<"pending" | "granted" | "denied">("pending");
   const [isRecording, setIsRecording] = useState(false);
   const [lastBufferSize, setLastBufferSize] = useState(0);
@@ -177,9 +179,19 @@ export function Home() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Logout Error', 'Failed to logout');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text>Home Screen - Microphone Test</Text>
+      <Text>Welcome, {user?.email}!</Text>
       <Text>Microphone Access: {micAccess}</Text>
 
       {micAccess === "granted" && (
@@ -215,9 +227,13 @@ export function Home() {
         </Text>
       )}
 
-      <Button screen="Profile" params={{ user: 'jane' }}>
-        Go to Profile
-      </Button>
+      <TouchableOpacity
+        style={[styles.button, styles.logoutButton]}
+        onPress={handleLogout}
+      >
+        <Text style={styles.buttonText}>Logout</Text>
+      </TouchableOpacity>
+
       <Button screen="Settings">Go to Settings</Button>
     </View>
   );
@@ -241,6 +257,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     marginVertical: 5,
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
   },
   buttonText: {
     color: 'white',

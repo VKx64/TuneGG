@@ -5,6 +5,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, passwordConfirm: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -46,7 +47,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string) => {
     const authResponse = await pocketbase.login(email, password);
-    setUser(authResponse.record);
+    setUser(authResponse.record as unknown as User);
+  };
+
+  const register = async (email: string, password: string, passwordConfirm: string, name?: string) => {
+    const record = await pocketbase.register(email, password, passwordConfirm, name);
+    // After registration, automatically log the user in
+    const authResponse = await pocketbase.login(email, password);
+    setUser(authResponse.record as unknown as User);
   };
 
   const logout = async () => {
@@ -58,6 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     isLoading,
     login,
+    register,
     logout,
     isAuthenticated: pocketbase.isAuthenticated,
   };

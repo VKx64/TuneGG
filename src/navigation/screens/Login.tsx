@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -24,16 +26,13 @@ export function Login() {
 
     try {
       await login(email, password);
-      Alert.alert('Success', 'Welcome back!');
-
+      // Navigation will happen automatically due to auth state change
       // Clear form on success
       setEmail('');
       setPassword('');
 
-      // Here you would typically navigate to the main app screen
-      // navigation.navigate('Home'); // Uncomment when using React Navigation
-
     } catch (error: any) {
+      console.error('Login error:', error);
       Alert.alert('Login Failed', error.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
@@ -75,6 +74,15 @@ export function Login() {
           ) : (
             <Text style={styles.loginButtonText}>Login</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.registerLink}
+          onPress={() => navigation.navigate('Register' as never)}
+        >
+          <Text style={styles.registerLinkText}>
+            Don't have an account? Register here
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -118,7 +126,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#000000',
   },
   loginButton: {
     backgroundColor: '#007AFF',
@@ -134,5 +142,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  registerLink: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  registerLinkText: {
+    color: '#007AFF',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });

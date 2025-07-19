@@ -5,15 +5,20 @@ import {
   StaticParamList,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image } from 'react-native';
+import { Image, ActivityIndicator, View } from 'react-native';
+import React from 'react';
 import bell from '../assets/bell.png';
 import newspaper from '../assets/newspaper.png';
 import { Home } from './screens/Home';
 import { Profile } from './screens/Profile';
 import { Settings } from './screens/Settings';
-import { Updates } from './screens/Updates';
+import { GameModes } from './screens/GameModes';
+import { GamePitch } from './screens/GamePitch';
 import { NotFound } from './screens/NotFound';
 import { Login } from './screens/Login';
+import { Register } from './screens/Register';
+import { Lesson } from './screens/Lesson';
+import { useAuth } from '../contexts/AuthContext';
 
 const HomeTabs = createBottomTabNavigator({
   screens: {
@@ -33,12 +38,45 @@ const HomeTabs = createBottomTabNavigator({
         ),
       },
     },
-    Updates: {
-      screen: Updates,
+    GameModes: {
+      screen: GameModes,
       options: {
+        title: 'Game Modes',
         tabBarIcon: ({ color, size }) => (
           <Image
             source={bell}
+            tintColor={color}
+            style={{
+              width: size,
+              height: size,
+            }}
+          />
+        ),
+      },
+    },
+    Lesson: {
+      screen: Lesson,
+      options: {
+        title: 'Lesson',
+        tabBarIcon: ({ color, size }) => (
+          <Image
+            source={newspaper}
+            tintColor={color}
+            style={{
+              width: size,
+              height: size,
+            }}
+          />
+        ),
+      },
+    },
+    Profile: {
+      screen: Profile,
+      options: {
+        title: 'Profile',
+        tabBarIcon: ({ color, size }) => (
+          <Image
+            source={newspaper} // You can replace this with a profile icon if you have one
             tintColor={color}
             style={{
               width: size,
@@ -53,29 +91,11 @@ const HomeTabs = createBottomTabNavigator({
 
 const RootStack = createNativeStackNavigator({
   screens: {
-    Login: {
-      screen: Login,
-      options: {
-        title: 'Login',
-      },
-    },
-    HomeTabs: {
+    AuthenticatedApp: {
       screen: HomeTabs,
       options: {
         title: 'Home',
         headerShown: false,
-      },
-    },
-    Profile: {
-      screen: Profile,
-      linking: {
-        path: ':user(@[a-zA-Z0-9-_]+)',
-        parse: {
-          user: (value) => value.replace(/^@/, ''),
-        },
-        stringify: {
-          user: (value) => `@${value}`,
-        },
       },
     },
     Settings: {
@@ -89,6 +109,13 @@ const RootStack = createNativeStackNavigator({
         ),
       }),
     },
+    GamePitch: {
+      screen: GamePitch,
+      options: {
+        title: 'Pitch Matching Game',
+        headerShown: true,
+      },
+    },
     NotFound: {
       screen: NotFound,
       options: {
@@ -101,12 +128,53 @@ const RootStack = createNativeStackNavigator({
   },
 });
 
-export const Navigation = createStaticNavigation(RootStack);
+const AuthStack = createNativeStackNavigator({
+  screens: {
+    Login: {
+      screen: Login,
+      options: {
+        title: 'Login',
+        headerShown: false,
+      },
+    },
+    Register: {
+      screen: Register,
+      options: {
+        title: 'Register',
+        headerShown: false,
+      },
+    },
+  },
+});
+
+// Authentication-aware navigation component
+function AuthNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    const AuthenticatedNavigation = createStaticNavigation(RootStack);
+    return <AuthenticatedNavigation />;
+  } else {
+    const UnauthenticatedNavigation = createStaticNavigation(AuthStack);
+    return <UnauthenticatedNavigation />;
+  }
+}
+
+export const Navigation = AuthNavigator;
 
 type RootStackParamList = StaticParamList<typeof RootStack>;
+type AuthStackParamList = StaticParamList<typeof AuthStack>;
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends RootStackParamList, AuthStackParamList {}
   }
 }
