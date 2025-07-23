@@ -14,16 +14,14 @@ const THRESHOLD_DEFAULT = 0.15;
 
 // Note conversion utilities
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
-const OCTAVE_NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 export type NoteName = (typeof NOTE_NAMES)[number];
-export type OctaveNumber = (typeof OCTAVE_NUMBERS)[number];
-export type Note = { name: NoteName; octave: OctaveNumber };
+export type Note = { name: NoteName };
 
 /**
- * Get nearest note name and octave from a given frequency.
+ * Get nearest note name from a given frequency.
  * @param frequency Frequency in Hz.
- * @returns name and octave of the note.
+ * @returns name of the note.
  */
 function getNoteFromFreq(frequency: number): Note | undefined {
   if (frequency <= 0) return undefined;
@@ -35,11 +33,10 @@ function getNoteFromFreq(frequency: number): Note | undefined {
   // Octaves start in C, calculate semitones from C4
   const semitonesFromC4 = Math.round(semitonesFromA4 + 9);
 
-  // Determine the note and octave
+  // Determine the note
   const noteIndex = ((semitonesFromC4 % 12) + 12) % 12;
-  const octave = 4 + Math.floor(semitonesFromC4 / 12); // Adjust octave
 
-  return { name: NOTE_NAMES[noteIndex], octave: octave as OctaveNumber };
+  return { name: NOTE_NAMES[noteIndex] };
 }
 
 /**
@@ -47,9 +44,7 @@ function getNoteFromFreq(frequency: number): Note | undefined {
  * @param note The name and octave of the note.
  * @returns The frequency of the note in Hz.
  */
-function getFreqFromNote(note: Note | undefined): number {
-  if (!note) return 0;
-
+function getFreqFromNote(note: { name: NoteName; octave: number }): number {
   const a4_frequency = 440;
 
   // Calculate the semitone offset from A4
@@ -71,8 +66,11 @@ function getNoteCents(frequency: number): number {
   const note = getNoteFromFreq(frequency);
   if (!note) return 0;
 
-  const noteFreq = getFreqFromNote(note);
-  const cents = 1200 * Math.log2(frequency / noteFreq);
+  const a4_frequency = 440;
+  const semitonesFromA4 = 12 * Math.log2(frequency / a4_frequency);
+  const roundedSemitonesFromA4 = Math.round(semitonesFromA4);
+  const nearestNoteFreq = a4_frequency * Math.pow(2, roundedSemitonesFromA4 / 12);
+  const cents = 1200 * Math.log2(frequency / nearestNoteFreq);
 
   return Math.round(cents);
 }
@@ -132,7 +130,7 @@ export function Home() {
     setCents(detectedCents);
 
     if (detectedPitch > 0 && detectedNote) {
-      console.log(`Note: ${detectedNote.name}${detectedNote.octave}, Cents: ${detectedCents > 0 ? '+' : ''}${detectedCents}`);
+      console.log(`Note: ${detectedNote.name}, Cents: ${detectedCents > 0 ? '+' : ''}${detectedCents}`);
     }
   }, [audioBuffer, sampleRate, micAccess, isRecording, bufferId]);
 
@@ -202,7 +200,7 @@ export function Home() {
           <Text>Buffers per second: {MicrophoneStreamModule.BUF_PER_SEC}</Text>
           <Text>Detected Pitch: {pitch > 0 ? `${pitch.toFixed(1)}Hz` : "No pitch detected"}</Text>
           <Text style={styles.noteText}>
-            Detected Note: {note ? `${note.name}${note.octave}` : "No note"}
+            Detected Note: {note ? `${note.name}` : "No note"}
           </Text>
           {pitch > 0 && note && (
             <Text style={[styles.centsText, cents > 10 ? styles.sharp : cents < -10 ? styles.flat : styles.inTune]}>

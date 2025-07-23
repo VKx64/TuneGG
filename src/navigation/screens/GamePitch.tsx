@@ -17,22 +17,21 @@ const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", 
 const OCTAVE_NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 export type NoteName = (typeof NOTE_NAMES)[number];
-export type OctaveNumber = (typeof OCTAVE_NUMBERS)[number];
-export type Note = { name: NoteName; octave: OctaveNumber };
+export type Note = { name: NoteName };
 
 // Game specific notes range (C3 to B5)
-const GAME_NOTES: Note[] = [];
+const GAME_NOTES: { name: NoteName; octave: number }[] = [];
 for (let octave = 3; octave <= 5; octave++) {
   for (let noteIndex = 0; noteIndex < NOTE_NAMES.length; noteIndex++) {
     GAME_NOTES.push({
       name: NOTE_NAMES[noteIndex],
-      octave: octave as OctaveNumber
+      octave: octave
     });
   }
 }
 
 /**
- * Get nearest note name and octave from a given frequency.
+ * Get nearest note name from a given frequency.
  */
 function getNoteFromFreq(frequency: number): Note | undefined {
   if (frequency <= 0) return undefined;
@@ -41,15 +40,14 @@ function getNoteFromFreq(frequency: number): Note | undefined {
   const semitonesFromA4 = 12 * Math.log2(frequency / a4_frequency);
   const semitonesFromC4 = Math.round(semitonesFromA4 + 9);
   const noteIndex = ((semitonesFromC4 % 12) + 12) % 12;
-  const octave = 4 + Math.floor(semitonesFromC4 / 12);
 
-  return { name: NOTE_NAMES[noteIndex], octave: octave as OctaveNumber };
+  return { name: NOTE_NAMES[noteIndex] };
 }
 
 /**
  * Calculates the frequency of a note given its name and octave.
  */
-function getFreqFromNote(note: Note | undefined): number {
+function getFreqFromNote(note: { name: NoteName; octave: number } | undefined): number {
   if (!note) return 0;
 
   const a4_frequency = 440;
@@ -65,11 +63,11 @@ function getFreqFromNote(note: Note | undefined): number {
 function getNoteCents(frequency: number): number {
   if (frequency <= 0) return 0;
 
-  const note = getNoteFromFreq(frequency);
-  if (!note) return 0;
-
-  const noteFreq = getFreqFromNote(note);
-  const cents = 1200 * Math.log2(frequency / noteFreq);
+  const a4_frequency = 440;
+  const semitonesFromA4 = 12 * Math.log2(frequency / a4_frequency);
+  const roundedSemitonesFromA4 = Math.round(semitonesFromA4);
+  const nearestNoteFreq = a4_frequency * Math.pow(2, roundedSemitonesFromA4 / 12);
+  const cents = 1200 * Math.log2(frequency / nearestNoteFreq);
 
   return Math.round(cents);
 }
@@ -77,15 +75,15 @@ function getNoteCents(frequency: number): number {
 /**
  * Check if two notes are the same
  */
-function notesMatch(note1: Note | undefined, note2: Note | undefined): boolean {
+function notesMatch(note1: Note | undefined, note2: { name: NoteName; octave: number } | undefined): boolean {
   if (!note1 || !note2) return false;
-  return note1.name === note2.name && note1.octave === note2.octave;
+  return note1.name === note2.name;
 }
 
 /**
  * Generate a random note from the game range
  */
-function generateRandomNote(): Note {
+function generateRandomNote(): { name: NoteName; octave: number } {
   const randomIndex = Math.floor(Math.random() * GAME_NOTES.length);
   return GAME_NOTES[randomIndex];
 }
@@ -103,7 +101,7 @@ export function GamePitch() {
 
   // Game state
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'completed'>('ready');
-  const [targetNotes, setTargetNotes] = useState<Note[]>([]);
+  const [targetNotes, setTargetNotes] = useState<{ name: NoteName; octave: number }[]>([]);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [matchedNotes, setMatchedNotes] = useState<boolean[]>([]);
@@ -269,7 +267,7 @@ export function GamePitch() {
               <View style={styles.targetNoteContainer}>
                 <Text style={styles.targetLabel}>Target Note:</Text>
                 <Text style={styles.targetNote}>
-                  {currentTargetNote ? `${currentTargetNote.name}${currentTargetNote.octave}` : ''}
+                  {currentTargetNote ? `${currentTargetNote.name}` : ''}
                 </Text>
               </View>
 
@@ -285,7 +283,7 @@ export function GamePitch() {
                     ]}
                   >
                     <Text style={styles.progressDotText}>
-                      {note.name}{note.octave}
+                      {note.name}
                     </Text>
                   </View>
                 ))}
@@ -295,7 +293,7 @@ export function GamePitch() {
               <View style={styles.detectionContainer}>
                 <Text style={styles.detectionLabel}>You're playing:</Text>
                 <Text style={styles.detectedNote}>
-                  {detectedNote ? `${detectedNote.name}${detectedNote.octave}` : "No note detected"}
+                  {detectedNote ? `${detectedNote.name}` : "No note detected"}
                 </Text>
                 {pitch > 0 && detectedNote && (
                   <Text style={[
@@ -323,7 +321,7 @@ export function GamePitch() {
                 {targetNotes.map((note, index) => (
                   <View key={index} style={styles.resultItem}>
                     <Text style={styles.resultNote}>
-                      {note.name}{note.octave}
+                      {note.name}
                     </Text>
                     <Text style={matchedNotes[index] ? styles.resultSuccess : styles.resultMiss}>
                       {matchedNotes[index] ? '✓' : '✗'}
