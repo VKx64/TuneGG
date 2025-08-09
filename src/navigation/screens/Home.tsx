@@ -233,6 +233,7 @@ export function Home() {
       </TouchableOpacity>
 
       <Button screen="Settings">Go to Settings</Button>
+      <Button screen="Achievements">View Achievements</Button>
     </View>
   );
 }

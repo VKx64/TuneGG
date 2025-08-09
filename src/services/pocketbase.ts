@@ -68,6 +68,22 @@ export const pocketbase = {
         });
     },
 
+    // User experience methods
+    async updateUserExperience(userId: string, experienceToAdd: number) {
+        const currentUser = await pb.collection('users').getOne(userId);
+        const currentExperience = currentUser.experience || 0;
+        const newExperience = currentExperience + experienceToAdd;
+
+        return await pb.collection('users').update(userId, {
+            experience: newExperience
+        });
+    },
+
+    async getUserExperience(userId: string): Promise<number> {
+        const user = await pb.collection('users').getOne(userId);
+        return user.experience || 0;
+    },
+
     // Direct access to PocketBase instance
     get client() {
         return pb;

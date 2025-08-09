@@ -5,6 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import { AudioModule } from 'expo-audio';
 import MicrophoneStreamModule, { AudioBuffer } from '../../../modules/microphone-stream';
 import DSPModule from '../../../specs/NativeDSPModule';
+import { useAuth } from '../../contexts/AuthContext';
+import { pocketbase } from '../../services/pocketbase';
 
 // Pitch detection parameters
 const BUF_SIZE = 9000;
@@ -90,6 +92,7 @@ function generateRandomNote(): { name: NoteName; octave: number } {
 
 export function GamePitch() {
   const navigation = useNavigation();
+  const { user, isAuthenticated } = useAuth();
   const [micAccess, setMicAccess] = useState<"pending" | "granted" | "denied">("pending");
   const [isRecording, setIsRecording] = useState(false);
   const [sampleRate, setSampleRate] = useState(0);
@@ -105,6 +108,35 @@ export function GamePitch() {
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [matchedNotes, setMatchedNotes] = useState<boolean[]>([]);
+  const [xpAwarded, setXpAwarded] = useState(false);
+
+  // Function to award XP to the user
+  const awardXP = async (amount: number) => {
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, cannot award XP');
+      return;
+    }
+
+    try {
+      await pocketbase.updateUserExperience(user.id, amount);
+
+      console.log(`Awarded ${amount} XP!`);
+
+      // Show success message to user
+      Alert.alert(
+        "Congratulations!",
+        `You earned ${amount} XP for completing the game!`,
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      console.error('Error awarding XP:', error);
+      Alert.alert(
+        "Game Complete!",
+        "You completed the game, but there was an issue updating your experience points.",
+        [{ text: "OK" }]
+      );
+    }
+  };
 
   // Request microphone permission
   useEffect(() => {
@@ -166,11 +198,17 @@ export function GamePitch() {
       if (currentNoteIndex + 1 >= targetNotes.length) {
         setGameState('completed');
         stopRecording();
+
+        // Award XP only once for perfect completion (all 5 notes)
+        if (score + 1 === 5 && !xpAwarded) {
+          setXpAwarded(true);
+          awardXP(50);
+        }
       } else {
         setCurrentNoteIndex(currentNoteIndex + 1);
       }
     }
-  }, [detectedNote, cents, gameState, currentNoteIndex, targetNotes, matchedNotes, score]);
+  }, [detectedNote, cents, gameState, currentNoteIndex, targetNotes, matchedNotes, score, xpAwarded]);
 
   const startGame = () => {
     // Generate 5 random notes
@@ -179,6 +217,7 @@ export function GamePitch() {
     setCurrentNoteIndex(0);
     setScore(0);
     setMatchedNotes(new Array(5).fill(false));
+    setXpAwarded(false);
     setGameState('playing');
     startRecording();
   };
@@ -230,6 +269,7 @@ export function GamePitch() {
     setCurrentNoteIndex(0);
     setScore(0);
     setMatchedNotes([]);
+    setXpAwarded(false);
   };
 
   const currentTargetNote = targetNotes[currentNoteIndex];
@@ -246,6 +286,14 @@ export function GamePitch() {
 
       {micAccess === "granted" && (
         <>
+          {!isAuthenticated && (
+            <View style={styles.warningContainer}>
+              <Text style={styles.warningText}>
+                Login to save your progress and earn XP!
+              </Text>
+            </View>
+          )}
+
           {gameState === 'ready' && (
             <View style={styles.gameContainer}>
               <Text style={styles.description}>
@@ -317,6 +365,16 @@ export function GamePitch() {
               <Text style={styles.completedTitle}>Game Completed!</Text>
               <Text style={styles.scoreText}>Score: {score}/5</Text>
 
+              {isAuthenticated && score === 5 && (
+                <Text style={styles.xpText}>+50 XP Earned!</Text>
+              )}
+
+              {!isAuthenticated && score === 5 && (
+                <Text style={styles.missedXpText}>
+                  Login to earn 50 XP for perfect games!
+                </Text>
+              )}
+
               <View style={styles.resultsContainer}>
                 {targetNotes.map((note, index) => (
                   <View key={index} style={styles.resultItem}>
@@ -372,6 +430,20 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginHorizontal: 20,
+  },
+  warningContainer: {
+    backgroundColor: '#FFF3CD',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#FFEAA7',
+  },
+  warningText: {
+    color: '#856404',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
   },
   gameContainer: {
     alignItems: 'center',
@@ -489,6 +561,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 20,
+  },
+  xpText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  missedXpText: {
+    fontSize: 16,
+    color: '#FF9800',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   resultsContainer: {
     marginBottom: 20,

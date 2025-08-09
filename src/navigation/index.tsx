@@ -18,6 +18,7 @@ import { NotFound } from './screens/NotFound';
 import { Login } from './screens/Login';
 import { Register } from './screens/Register';
 import { Lesson } from './screens/Lesson';
+import { Achievements } from './screens/Achievements';
 import { useAuth } from '../contexts/AuthContext';
 
 const HomeTabs = createBottomTabNavigator({
@@ -100,6 +101,17 @@ const RootStack = createNativeStackNavigator({
     },
     Settings: {
       screen: Settings,
+      options: ({ navigation }) => ({
+        presentation: 'modal',
+        headerRight: () => (
+          <HeaderButton onPress={navigation.goBack}>
+            <Text>Close</Text>
+          </HeaderButton>
+        ),
+      }),
+    },
+    Achievements: {
+      screen: Achievements,
       options: ({ navigation }) => ({
         presentation: 'modal',
         headerRight: () => (
