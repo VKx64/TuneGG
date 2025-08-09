@@ -47,6 +47,7 @@ export function Login() {
         <TextInput
           style={styles.input}
           placeholder="Email"
+          placeholderTextColor="black"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -57,6 +58,7 @@ export function Login() {
         <TextInput
           style={styles.input}
           placeholder="Password"
+          placeholderTextColor="black"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -126,7 +128,8 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#000000',
+    backgroundColor: 'white',
+    color: 'black',
   },
   loginButton: {
     backgroundColor: '#007AFF',
