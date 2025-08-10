@@ -1,32 +1,32 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { HeaderButton, Text } from '@react-navigation/elements';
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { HeaderButton, Text } from "@react-navigation/elements";
 import {
   createStaticNavigation,
   StaticParamList,
-} from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image, ActivityIndicator, View } from 'react-native';
-import React from 'react';
-import bell from '../assets/bell.png';
-import newspaper from '../assets/newspaper.png';
-import { Home } from './screens/Home';
-import { Profile } from './screens/Profile';
-import { Settings } from './screens/Settings';
-import { GameModes } from './screens/GameModes';
-import { GamePitch } from './screens/GamePitch';
-import { NotFound } from './screens/NotFound';
-import { Login } from './screens/Login';
-import { Register } from './screens/Register';
-import { Lesson } from './screens/Lesson';
-import { Achievements } from './screens/Achievements';
-import { useAuth } from '../contexts/AuthContext';
+} from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Image, ActivityIndicator, View } from "react-native";
+import React from "react";
+import bell from "../assets/bell.png";
+import newspaper from "../assets/newspaper.png";
+import { Home } from "./screens/Home";
+import { Profile } from "./screens/Profile";
+import { Settings } from "./screens/Settings";
+import { GameModes } from "./screens/GameModes";
+import { GamePitch } from "./screens/GamePitch";
+import { NotFound } from "./screens/NotFound";
+import { Login } from "./screens/Login";
+import { Register } from "./screens/Register";
+import { Lesson } from "./screens/Lesson";
+import { Achievements } from "./screens/Achievements";
+import { useAuth } from "../contexts/AuthContext";
 
 const HomeTabs = createBottomTabNavigator({
   screens: {
     Home: {
       screen: Home,
       options: {
-        title: 'Feed',
+        title: "Feed",
         tabBarIcon: ({ color, size }) => (
           <Image
             source={newspaper}
@@ -42,7 +42,7 @@ const HomeTabs = createBottomTabNavigator({
     GameModes: {
       screen: GameModes,
       options: {
-        title: 'Game Modes',
+        title: "Game Modes",
         tabBarIcon: ({ color, size }) => (
           <Image
             source={bell}
@@ -58,7 +58,7 @@ const HomeTabs = createBottomTabNavigator({
     Lesson: {
       screen: Lesson,
       options: {
-        title: 'Lesson',
+        title: "Lesson",
         tabBarIcon: ({ color, size }) => (
           <Image
             source={newspaper}
@@ -74,7 +74,7 @@ const HomeTabs = createBottomTabNavigator({
     Profile: {
       screen: Profile,
       options: {
-        title: 'Profile',
+        title: "Profile",
         tabBarIcon: ({ color, size }) => (
           <Image
             source={newspaper} // You can replace this with a profile icon if you have one
@@ -95,14 +95,14 @@ const RootStack = createNativeStackNavigator({
     AuthenticatedApp: {
       screen: HomeTabs,
       options: {
-        title: 'Home',
+        title: "Home",
         headerShown: false,
       },
     },
     Settings: {
       screen: Settings,
       options: ({ navigation }) => ({
-        presentation: 'modal',
+        presentation: "modal",
         headerRight: () => (
           <HeaderButton onPress={navigation.goBack}>
             <Text>Close</Text>
@@ -113,7 +113,7 @@ const RootStack = createNativeStackNavigator({
     Achievements: {
       screen: Achievements,
       options: ({ navigation }) => ({
-        presentation: 'modal',
+        presentation: "modal",
         headerRight: () => (
           <HeaderButton onPress={navigation.goBack}>
             <Text>Close</Text>
@@ -124,17 +124,17 @@ const RootStack = createNativeStackNavigator({
     GamePitch: {
       screen: GamePitch,
       options: {
-        title: 'Pitch Matching Game',
+        title: "Pitch Matching Game",
         headerShown: true,
       },
     },
     NotFound: {
       screen: NotFound,
       options: {
-        title: '404',
+        title: "404",
       },
       linking: {
-        path: '*',
+        path: "*",
       },
     },
   },
@@ -145,14 +145,14 @@ const AuthStack = createNativeStackNavigator({
     Login: {
       screen: Login,
       options: {
-        title: 'Login',
+        title: "Login",
         headerShown: false,
       },
     },
     Register: {
       screen: Register,
       options: {
-        title: 'Register',
+        title: "Register",
         headerShown: false,
       },
     },
@@ -165,7 +165,7 @@ function AuthNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" />
       </View>
     );
