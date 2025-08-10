@@ -32,6 +32,11 @@
         }
       ],
       "react-native-edge-to-edge"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7869d7b4-593c-4a8b-96a1-239e2e5ceedd"
+      }
+    }
   }
 }

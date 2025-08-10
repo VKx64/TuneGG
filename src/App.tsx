@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
 import { useColorScheme } from 'react-native';
 import { Navigation } from './navigation';
+import { AuthProvider } from './contexts/AuthContext';
 
 Asset.loadAsync([
   ...NavigationAssets,
@@ -19,19 +20,13 @@ export function App() {
 
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
 
+  React.useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
   return (
-    <Navigation
-      theme={theme}
-      linking={{
-        enabled: 'auto',
-        prefixes: [
-          // Change the scheme to match your app's scheme defined in app.json
-          'helloworld://',
-        ],
-      }}
-      onReady={() => {
-        SplashScreen.hideAsync();
-      }}
-    />
+    <AuthProvider>
+      <Navigation />
+    </AuthProvider>
   );
 }
