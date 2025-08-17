@@ -16,7 +16,6 @@ const THRESHOLD_DEFAULT = 0.15;
 
 // Note conversion utilities
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
-const OCTAVE_NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 export type NoteName = (typeof NOTE_NAMES)[number];
 export type Note = { name: NoteName };

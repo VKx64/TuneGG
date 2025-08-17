@@ -31,6 +31,22 @@ const GAME_MODES: GameMode[] = [
     instrument: 'Any',
     icon: '🎯',
   },
+  {
+    id: '2',
+    title: 'Melody Memory',
+    description: 'Memorize a sequence of notes and sing them back!',
+    difficulty: 'Intermediate',
+    instrument: 'Any',
+    icon: '🧠',
+  },
+  {
+    id: '3',
+    title: 'Note Speed Test',
+    description: 'Play 20 different notes as fast as you can!',
+    difficulty: 'Advanced',
+    instrument: 'Any',
+    icon: '⚡',
+  },
 ];
 
 interface GameModeItemProps {
@@ -40,41 +56,50 @@ interface GameModeItemProps {
 }
 
 const GameModeItem: React.FC<GameModeItemProps> = ({ item, onPress, isSelected }) => {
-  const getDifficultyColor = (difficulty: string) => {
+  const getDifficultyStyle = (difficulty: string) => {
     switch (difficulty) {
       case 'Beginner':
-        return '#4CAF50';
+        return {
+          borderColor: '#4CAF50',
+          backgroundColor: '#e8f5e9',
+        };
       case 'Intermediate':
-        return '#FF9800';
+        return {
+          borderColor: '#FFC107', // Amber
+          backgroundColor: '#fff8e1',
+        };
       case 'Advanced':
-        return '#F44336';
+        return {
+          borderColor: '#F44336', // Red
+          backgroundColor: '#ffebee',
+        };
       default:
-        return '#757575';
+        return {};
     }
   };
 
   return (
     <TouchableOpacity
-      style={[styles.gameMode, isSelected && styles.selectedGameMode]}
+      style={[
+        styles.gameMode,
+        getDifficultyStyle(item.difficulty),
+        isSelected && styles.selectedGameMode,
+      ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <View style={styles.gameModeHeader}>
+      <View style={styles.gameModeContent}>
         <Text style={styles.gameModeIcon}>{item.icon}</Text>
         <View style={styles.gameModeInfo}>
           <Text style={styles.gameModeTitle}>{item.title}</Text>
-          <Text style={styles.gameModeInstrument}>{item.instrument}</Text>
-        </View>
-        <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
-          <Text style={styles.difficultyText}>{item.difficulty}</Text>
+          <Text style={styles.gameModeDescription}>{item.description}</Text>
         </View>
       </View>
-      <Text style={styles.gameModeDescription}>{item.description}</Text>
     </TouchableOpacity>
   );
 };
 
-export function GameModes() {
+export function Games() {
   const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
   const navigation = useNavigation();
 
@@ -93,6 +118,12 @@ export function GameModes() {
       // Navigate to GamePitch for the Pitch Matching Game
       if (selectedMode.id === '1') {
         navigation.navigate('GamePitch' as never);
+      }
+      if (selectedMode.id === '2') {
+        navigation.navigate('GameMemory' as never);
+      }
+      if (selectedMode.id === '3') {
+        navigation.navigate('GameSpeed' as never);
       }
     }
   };
@@ -167,38 +198,22 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
     backgroundColor: '#f0f8ff',
   },
-  gameModeHeader: {
+  gameModeContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   gameModeIcon: {
-    fontSize: 32,
+    fontSize: 48,
     marginRight: 16,
   },
   gameModeInfo: {
     flex: 1,
   },
   gameModeTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#212529',
     marginBottom: 4,
-  },
-  gameModeInstrument: {
-    fontSize: 14,
-    color: '#6c757d',
-    fontWeight: '500',
-  },
-  difficultyBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  difficultyText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   gameModeDescription: {
     fontSize: 14,

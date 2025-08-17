@@ -12,8 +12,10 @@ import newspaper from "../assets/newspaper.png";
 import { Home } from "./screens/Home";
 import { Profile } from "./screens/Profile";
 import { Settings } from "./screens/Settings";
-import { GameModes } from "./screens/GameModes";
+import { Games } from "./screens/Games";
 import { GamePitch } from "./screens/GamePitch";
+import { GameMemory } from "./screens/GameMemory";
+import { GameSpeed } from "./screens/GameSpeed";
 import { NotFound } from "./screens/NotFound";
 import { Login } from "./screens/Login";
 import { Register } from "./screens/Register";
@@ -39,8 +41,8 @@ const HomeTabs = createBottomTabNavigator({
         ),
       },
     },
-    GameModes: {
-      screen: GameModes,
+    Games: {
+      screen: Games,
       options: {
         title: "Game Modes",
         tabBarIcon: ({ color, size }) => (
@@ -125,6 +127,20 @@ const RootStack = createNativeStackNavigator({
       screen: GamePitch,
       options: {
         title: "Pitch Matching Game",
+        headerShown: true,
+      },
+    },
+    GameMemory: {
+      screen: GameMemory,
+      options: {
+        title: "Melody Memory Game",
+        headerShown: true,
+      },
+    },
+    GameSpeed: {
+      screen: GameSpeed,
+      options: {
+        title: "Note Speed Test",
         headerShown: true,
       },
     },
