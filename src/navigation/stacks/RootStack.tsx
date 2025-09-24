@@ -6,6 +6,8 @@ import { Achievements } from '../screens/shared/Achievements';
 import { GamePitch } from '../screens/games/GamePitch';
 import { GameMemory } from '../screens/games/GameMemory';
 import { GameSpeed } from '../screens/games/GameSpeed';
+import { LessonFlow } from '../screens/lessons/LessonFlow';
+import { LessonNote } from '../screens/lessons/LessonNote';
 import { NotFound } from '../screens/shared/NotFound';
 import { RootStackParamList } from '../types';
 
@@ -58,6 +60,20 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
       screen: GameSpeed,
       options: {
         title: "Note Speed Test",
+        headerShown: true,
+      },
+    },
+    LessonFlow: {
+      screen: LessonFlow,
+      options: {
+        title: "Lesson Flow",
+        headerShown: true,
+      },
+    },
+    LessonNote: {
+      screen: LessonNote,
+      options: {
+        title: "Learn Note",
         headerShown: true,
       },
     },

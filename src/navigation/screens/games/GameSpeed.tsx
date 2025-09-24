@@ -18,6 +18,7 @@ import {
   formatCents,
   getNoteCents
 } from '../../../utils/noteUtils';
+import { checkAndAwardAllegroArtistAchievement } from '../../../utils/gameAchievements';
 
 type GameState = 'setup' | 'playing' | 'finished';
 
@@ -156,6 +157,12 @@ export function GameSpeed() {
 
     setGameState('finished');
     setFeedback('🎉 Congratulations! Game completed!');
+
+    // Check and award Allegro Artist achievement if completed in under 60 seconds
+    checkAndAwardAllegroArtistAchievement(totalTime).catch(error => {
+      console.error('Failed to award Allegro Artist achievement:', error);
+      // Don't show error to user as it's not critical to game flow
+    });
   };
 
   // Reset the game
@@ -269,6 +276,16 @@ export function GameSpeed() {
                 <Text style={styles.statValue}>{(gameStats.slowestNote / 1000).toFixed(2)}s</Text>
               </View>
             </View>
+
+            {gameStats.totalTime < 60000 && (
+              <View style={styles.achievementNotice}>
+                <Text style={styles.achievementTitle}>🏆 Achievement Unlocked!</Text>
+                <Text style={styles.achievementDesc}>Allegro Artist</Text>
+                <Text style={styles.achievementSubDesc}>
+                  Complete the Note Speed Test in under 60 seconds ({(gameStats.totalTime / 1000).toFixed(2)}s)
+                </Text>
+              </View>
+            )}
 
             <TouchableOpacity
               style={styles.playAgainButton}
@@ -420,5 +437,32 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  achievementNotice: {
+    backgroundColor: '#fff3cd',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ffeaa7',
+  },
+  achievementTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 8,
+  },
+  achievementDesc: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#856404',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  achievementSubDesc: {
+    fontSize: 12,
+    color: '#6c757d',
+    textAlign: 'center',
   },
 });

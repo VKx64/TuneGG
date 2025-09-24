@@ -8,6 +8,14 @@ export type RootStackParamList = {
   GamePitch: undefined;
   GameMemory: undefined;
   GameSpeed: undefined;
+  LessonFlow: {
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+    notes: string[];
+    title: string;
+  };
+  LessonNote: {
+    note: string;
+  };
   NotFound: undefined;
 };
 

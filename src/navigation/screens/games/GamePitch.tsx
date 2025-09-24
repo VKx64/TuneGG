@@ -7,6 +7,7 @@ import MicrophoneStreamModule, { AudioBuffer } from '../../../../modules/microph
 import DSPModule from '../../../../specs/NativeDSPModule';
 import { useAuth } from '../../../contexts/AuthContext';
 import { pocketbase } from '../../../services/pocketbase';
+import { checkAndAwardPitchPerfectAchievement } from '../../../utils/gameAchievements';
 
 // Pitch detection parameters
 const BUF_SIZE = 9000;
@@ -202,6 +203,12 @@ export function GamePitch() {
         if (score + 1 === 5 && !xpAwarded) {
           setXpAwarded(true);
           awardXP(50);
+
+          // Check and award Pitch Perfect achievement for first completion
+          checkAndAwardPitchPerfectAchievement().catch(error => {
+            console.error('Failed to award Pitch Perfect achievement:', error);
+            // Don't show error to user as it's not critical to game flow
+          });
         }
       } else {
         setCurrentNoteIndex(currentNoteIndex + 1);
@@ -365,7 +372,14 @@ export function GamePitch() {
               <Text style={styles.scoreText}>Score: {score}/5</Text>
 
               {isAuthenticated && score === 5 && (
-                <Text style={styles.xpText}>+50 XP Earned!</Text>
+                <>
+                  <Text style={styles.xpText}>+50 XP Earned!</Text>
+                  <View style={styles.achievementNotice}>
+                    <Text style={styles.achievementTitle}>🏆 Achievement Unlocked!</Text>
+                    <Text style={styles.achievementDesc}>Pitch Perfect</Text>
+                    <Text style={styles.achievementSubDesc}>Win your first round of the Pitch Matching game</Text>
+                  </View>
+                </>
               )}
 
               {!isAuthenticated && score === 5 && (
@@ -605,5 +619,32 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     marginTop: 20,
+  },
+  achievementNotice: {
+    backgroundColor: '#fff3cd',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ffeaa7',
+  },
+  achievementTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 8,
+  },
+  achievementDesc: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#856404',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  achievementSubDesc: {
+    fontSize: 12,
+    color: '#6c757d',
+    textAlign: 'center',
   },
 });

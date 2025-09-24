@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginHorizontal: 20,
-    marginVertical: 15,
+    marginVertical: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   progressCard: {
     backgroundColor: 'white',
     marginHorizontal: 20,
-    marginVertical: 10,
+    marginVertical: 16,
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     backgroundColor: '#007AFF',
     marginHorizontal: 20,
-    marginVertical: 20,
+    marginVertical: 16,
     borderRadius: 16,
     padding: 20,
     flexDirection: 'row',

@@ -76,9 +76,17 @@ function getNoteCents(frequency: number): number {
  */
 function notesMatch(detectedNote: { name: NoteName; octave: number } | undefined, targetNote: Note, cents: number): boolean {
   if (!detectedNote || !targetNote) return false;
-  return detectedNote.name === targetNote.name &&
-         detectedNote.octave === targetNote.octave &&
-         Math.abs(cents) <= PITCH_TOLERANCE;
+  
+  const nameMatch = detectedNote.name === targetNote.name;
+  const octaveMatch = detectedNote.octave === targetNote.octave;
+  const centsInTolerance = Math.abs(cents) <= PITCH_TOLERANCE;
+  
+  // Debug logging
+  if (nameMatch && octaveMatch) {
+    console.log(`Note match attempt: ${detectedNote.name}${detectedNote.octave} vs ${targetNote.name}${targetNote.octave}, cents: ${cents}, tolerance: ${PITCH_TOLERANCE}, match: ${centsInTolerance}`);
+  }
+  
+  return nameMatch && octaveMatch && centsInTolerance;
 }
 
 /**
@@ -217,65 +225,80 @@ export function GameMemory() {
     const targetNote = melodySequence[currentNoteIndex];
     const isMatch = notesMatch(detectedNote, targetNote, cents);
 
+    console.log(`Game progress: Note ${currentNoteIndex + 1}/${melodySequence.length}, Target: ${targetNote.name}${targetNote.octave}, Detected: ${detectedNote.name}${detectedNote.octave}, Match: ${isMatch}`);
+
     if (isMatch) {
       // Clear any existing timers
       if (noteHoldTimerRef.current) {
+        console.log(`🔄 Clearing existing hold timer`);
         clearTimeout(noteHoldTimerRef.current);
       }
       if (noteTimeoutTimerRef.current) {
+        console.log(`⏰ Clearing timeout timer for matched note`);
         clearTimeout(noteTimeoutTimerRef.current);
       }
 
       // Start a timer to ensure the note is held for a short duration
       noteHoldTimerRef.current = setTimeout(() => {
-        // Note held successfully
-        const newPlayerSequence = [...playerSequence, detectedNote];
-        setPlayerSequence(newPlayerSequence);
-        setScore(score + 1);
+        console.log(`🎵 Note held successfully: ${detectedNote.name}${detectedNote.octave}`);
+        // Note held successfully - use functional updates to get current values
+        setPlayerSequence(prevPlayerSequence => [...prevPlayerSequence, detectedNote]);
+        setScore(prevScore => {
+          const newScore = prevScore + 1;
+          console.log(`✅ Note ${currentNoteIndex + 1} completed! Score: ${newScore}/${melodySequence.length}`);
+          
+          // Check if this was the last note in the sequence
+          if (currentNoteIndex + 1 >= melodySequence.length) {
+            // Round completed successfully
+            console.log(`🎉 Round ${currentRound} completed! Total score: ${newScore}/${melodySequence.length}`);
+            setTotalScore(prevTotal => prevTotal + newScore);
+            setGamePhase('roundComplete');
+            stopRecording();
+
+            // Award XP based on round completion
+            if (!xpAwarded) {
+              setXpAwarded(true);
+              const baseXP = 20 + (currentRound * 5); // Increasing XP per round
+              const perfectBonus = newScore === melodySequence.length ? 10 : 0;
+              awardXP(baseXP + perfectBonus);
+            }
+          } else {
+            // Move to next note
+            setCurrentNoteIndex(prevIndex => {
+              const nextIndex = prevIndex + 1;
+              console.log(`➡️ Moving to note ${nextIndex + 1}/${melodySequence.length}`);
+              // Start timeout for next note
+              noteTimeoutTimerRef.current = setTimeout(() => {
+                setGamePhase('failed');
+                stopRecording();
+                Alert.alert(
+                  "Time's up!",
+                  `You took too long to play note ${nextIndex + 1} of ${melodySequence.length}. Game over!`,
+                  [{ text: "OK" }]
+                );
+              }, NOTE_TIMEOUT);
+              return nextIndex;
+            });
+          }
+          
+          return newScore;
+        });
 
         // Animate success
         Animated.sequence([
           Animated.timing(pulseAnim, { toValue: 1.3, duration: 150, useNativeDriver: true }),
           Animated.timing(pulseAnim, { toValue: 1, duration: 150, useNativeDriver: true })
         ]).start();
-
-        // Move to next note or complete round
-        if (currentNoteIndex + 1 >= melodySequence.length) {
-          // Round completed successfully
-          const newTotalScore = totalScore + score + 1;
-          setTotalScore(newTotalScore);
-          setGamePhase('roundComplete');
-          stopRecording();
-
-          // Award XP based on round completion
-          if (!xpAwarded) {
-            setXpAwarded(true);
-            const baseXP = 20 + (currentRound * 5); // Increasing XP per round
-            const perfectBonus = score + 1 === melodySequence.length ? 10 : 0;
-            awardXP(baseXP + perfectBonus);
-          }
-        } else {
-          setCurrentNoteIndex(currentNoteIndex + 1);
-          // Start timeout for next note
-          noteTimeoutTimerRef.current = setTimeout(() => {
-            setGamePhase('failed');
-            stopRecording();
-            Alert.alert(
-              "Time's up!",
-              `You took too long to play note ${currentNoteIndex + 2} of ${melodySequence.length}. Game over!`,
-              [{ text: "OK" }]
-            );
-          }, NOTE_TIMEOUT);
-        }
       }, 500); // Hold note for 500ms
     } else {
       // Clear timer if note doesn't match
       if (noteHoldTimerRef.current) {
+        console.log(`❌ Note doesn't match, clearing hold timer`);
         clearTimeout(noteHoldTimerRef.current);
         noteHoldTimerRef.current = null;
       }
     }
-  }, [detectedNote, cents, gamePhase, currentNoteIndex, melodySequence, playerSequence, score, currentRound, totalScore, xpAwarded]);
+  }, [detectedNote, cents, gamePhase, currentNoteIndex, melodySequence, currentRound, xpAwarded, awardXP]);
 
   const startGame = () => {
     const sequenceLength = getSequenceLength(currentRound);

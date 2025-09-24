@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,272 +6,101 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
+import { useAuth } from '../../../contexts/AuthContext';
+import { getAchievementsWithStatus, getAchievementStats } from '../../../services/achievements';
+import {
+  Achievement,
+  AchievementStatus,
+  AchievementCategory
+} from '../../../types/achievements';
 
-// Achievement types
-type AchievementStatus = 'locked' | 'unlocked' | 'completed';
-type AchievementCategory = 'tuning' | 'chords' | 'scales' | 'rhythm' | 'practice' | 'lessons';
 
-interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  category: AchievementCategory;
-  status: AchievementStatus;
-  progress: number; // 0-100
-  maxProgress: number;
-  points: number;
-  icon: string; // Emoji icon for now
-  unlockedDate?: Date;
-}
-
-// Dummy achievements data
-const ACHIEVEMENTS: Achievement[] = [
-  // Tuning achievements
-  {
-    id: 'first_tune',
-    title: 'First String Tuned',
-    description: 'Successfully tune your first guitar string',
-    category: 'tuning',
-    status: 'completed',
-    progress: 1,
-    maxProgress: 1,
-    points: 10,
-    icon: '🎯',
-    unlockedDate: new Date('2025-01-15'),
-  },
-  {
-    id: 'perfect_tuner',
-    title: 'Perfect Tuner',
-    description: 'Tune all 6 strings within ±5 cents accuracy',
-    category: 'tuning',
-    status: 'unlocked',
-    progress: 4,
-    maxProgress: 6,
-    points: 50,
-    icon: '🎵',
-  },
-  {
-    id: 'speed_tuner',
-    title: 'Speed Tuner',
-    description: 'Tune your guitar in under 30 seconds',
-    category: 'tuning',
-    status: 'locked',
-    progress: 0,
-    maxProgress: 1,
-    points: 25,
-    icon: '⚡',
-  },
-
-  // Chord achievements
-  {
-    id: 'first_chord',
-    title: 'First Chord Master',
-    description: 'Learn your first guitar chord',
-    category: 'chords',
-    status: 'completed',
-    progress: 1,
-    maxProgress: 1,
-    points: 15,
-    icon: '🎸',
-    unlockedDate: new Date('2025-01-20'),
-  },
-  {
-    id: 'basic_chords',
-    title: 'Basic Chord Master',
-    description: 'Master 5 basic chords (G, C, D, Em, Am)',
-    category: 'chords',
-    status: 'unlocked',
-    progress: 3,
-    maxProgress: 5,
-    points: 75,
-    icon: '🏆',
-  },
-  {
-    id: 'barre_beginner',
-    title: 'Barre Chord Beginner',
-    description: 'Successfully play your first barre chord',
-    category: 'chords',
-    status: 'locked',
-    progress: 0,
-    maxProgress: 1,
-    points: 100,
-    icon: '💪',
-  },
-
-  // Scale achievements
-  {
-    id: 'pentatonic_minor',
-    title: 'Pentatonic Explorer',
-    description: 'Learn the minor pentatonic scale',
-    category: 'scales',
-    status: 'unlocked',
-    progress: 2,
-    maxProgress: 5,
-    points: 40,
-    icon: '🎼',
-  },
-  {
-    id: 'major_scale',
-    title: 'Major Scale Master',
-    description: 'Master the major scale across the fretboard',
-    category: 'scales',
-    status: 'locked',
-    progress: 0,
-    maxProgress: 7,
-    points: 120,
-    icon: '🌟',
-  },
-
-  // Rhythm achievements
-  {
-    id: 'metronome_friend',
-    title: 'Metronome Friend',
-    description: 'Practice with metronome for 10 sessions',
-    category: 'rhythm',
-    status: 'unlocked',
-    progress: 7,
-    maxProgress: 10,
-    points: 30,
-    icon: '⏱️',
-  },
-  {
-    id: 'rhythm_master',
-    title: 'Rhythm Master',
-    description: 'Play complex rhythmic patterns accurately',
-    category: 'rhythm',
-    status: 'locked',
-    progress: 0,
-    maxProgress: 1,
-    points: 80,
-    icon: '🥁',
-  },
-
-  // Practice achievements
-  {
-    id: 'daily_practice',
-    title: 'Daily Practitioner',
-    description: 'Practice guitar for 7 consecutive days',
-    category: 'practice',
-    status: 'unlocked',
-    progress: 5,
-    maxProgress: 7,
-    points: 50,
-    icon: '📅',
-  },
-  {
-    id: 'practice_marathon',
-    title: 'Practice Marathon',
-    description: 'Practice for 2 hours in a single session',
-    category: 'practice',
-    status: 'locked',
-    progress: 45,
-    maxProgress: 120,
-    points: 60,
-    icon: '🏃',
-  },
-  {
-    id: 'total_hours',
-    title: 'Dedicated Student',
-    description: 'Accumulate 50 hours of total practice time',
-    category: 'practice',
-    status: 'unlocked',
-    progress: 23,
-    maxProgress: 50,
-    points: 150,
-    icon: '⏰',
-  },
-
-  // Lesson achievements
-  {
-    id: 'lesson_complete',
-    title: 'Lesson Learner',
-    description: 'Complete your first guitar lesson',
-    category: 'lessons',
-    status: 'completed',
-    progress: 1,
-    maxProgress: 1,
-    points: 20,
-    icon: '📚',
-    unlockedDate: new Date('2025-01-18'),
-  },
-  {
-    id: 'beginner_course',
-    title: 'Beginner Graduate',
-    description: 'Complete the entire beginner course',
-    category: 'lessons',
-    status: 'unlocked',
-    progress: 8,
-    maxProgress: 12,
-    points: 200,
-    icon: '🎓',
-  },
-];
-
-const CATEGORY_COLORS: Record<AchievementCategory, string> = {
-  tuning: '#4CAF50',
-  chords: '#2196F3',
-  scales: '#FF9800',
-  rhythm: '#9C27B0',
-  practice: '#F44336',
-  lessons: '#795548',
-};
-
-const CATEGORY_NAMES: Record<AchievementCategory, string> = {
-  tuning: 'Tuning',
-  chords: 'Chords',
-  scales: 'Scales',
-  rhythm: 'Rhythm',
-  practice: 'Practice',
-  lessons: 'Lessons',
-};
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
 
 export function Achievements() {
-  const [selectedCategory, setSelectedCategory] = useState<AchievementCategory | 'all'>('all');
+  const { user } = useAuth();
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [stats, setStats] = useState({
+    totalAchievements: 0,
+    completedAchievements: 0,
+    totalPoints: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Calculate stats
-  const totalAchievements = ACHIEVEMENTS.length;
-  const completedAchievements = ACHIEVEMENTS.filter(a => a.status === 'completed').length;
-  const totalPoints = ACHIEVEMENTS.filter(a => a.status === 'completed').reduce((sum, a) => sum + a.points, 0);
+  // Load achievements and stats
+  useEffect(() => {
+    async function loadData() {
+      if (!user?.id) return;
 
-  // Filter achievements based on selected category
-  const filteredAchievements = selectedCategory === 'all'
-    ? ACHIEVEMENTS
-    : ACHIEVEMENTS.filter(a => a.category === selectedCategory);
+      try {
+        setLoading(true);
+        setError(null);
 
-  const renderProgressBar = (achievement: Achievement) => {
-    const percentage = (achievement.progress / achievement.maxProgress) * 100;
+        // Test connection first
+        const connectionTest = await import('../../../services/achievements').then(m => m.testPocketBaseConnection());
+        console.log('Connection test result:', connectionTest);
 
-    return (
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${percentage}%`,
-                backgroundColor: achievement.status === 'completed'
-                  ? '#4CAF50'
-                  : achievement.status === 'unlocked'
-                  ? CATEGORY_COLORS[achievement.category]
-                  : '#ccc'
-              }
-            ]}
-          />
-        </View>
-        <Text style={styles.progressText}>
-          {achievement.progress}/{achievement.maxProgress}
-        </Text>
-      </View>
-    );
-  };
+        // Add a small delay to see if it helps with the abort error
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const [achievementsData, statsData] = await Promise.all([
+          getAchievementsWithStatus(user.id),
+          getAchievementStats(user.id),
+        ]);
+
+        setAchievements(achievementsData);
+        setStats(statsData);
+      } catch (err: any) {
+        console.error('Error loading achievements:', err);
+
+        // Provide more specific error messages
+        let errorMessage = 'Failed to load achievements.';
+        if (err.message?.includes('Authentication required')) {
+          errorMessage = 'Please log in to view achievements.';
+        } else if (err.message?.includes('Authentication failed')) {
+          errorMessage = 'Session expired. Please log in again.';
+        } else if (err.message?.includes('Network connection timeout')) {
+          errorMessage = 'Connection timeout. Please check your network and try again.';
+        } else if (err.message?.includes('Something went wrong')) {
+          errorMessage = 'Database connection issue. Using offline data.';
+        }
+
+        setError(errorMessage);
+
+        // Use static data as fallback
+        const staticAchievements = Object.entries(await import('../../../types/achievements').then(m => m.ACHIEVEMENT_DEFINITIONS))
+          .map(([key, definition]) => ({
+            id: key,
+            ...definition,
+            status: 'unlocked' as const,
+            unlockedDate: undefined,
+          }));
+
+        setAchievements(staticAchievements);
+        setStats({
+          totalAchievements: staticAchievements.length,
+          completedAchievements: 0,
+          totalPoints: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [user?.id]);
+
+
+
 
   const renderAchievementCard = (achievement: Achievement) => {
     const isCompleted = achievement.status === 'completed';
-    const isUnlocked = achievement.status === 'unlocked';
     const isLocked = achievement.status === 'locked';
 
     return (
@@ -279,305 +108,346 @@ export function Achievements() {
         key={achievement.id}
         style={[
           styles.achievementCard,
-          isCompleted && styles.completedCard,
-          isLocked && styles.lockedCard,
+          isCompleted && styles.achievementCardCompleted,
+          isLocked && styles.achievementCardLocked,
         ]}
       >
-        <View style={styles.achievementHeader}>
-          <Text style={[styles.achievementIcon, isLocked && styles.lockedIcon]}>
+        <View
+          style={[
+            styles.achievementIcon,
+            isCompleted && styles.achievementIconCompleted,
+            isLocked && styles.achievementIconLocked
+          ]}
+        >
+          <Text style={styles.achievementEmoji}>
             {isLocked ? '🔒' : achievement.icon}
           </Text>
-          <View style={styles.achievementInfo}>
-            <Text style={[styles.achievementTitle, isLocked && styles.lockedText]}>
-              {achievement.title}
-            </Text>
-            <Text style={[styles.achievementDescription, isLocked && styles.lockedText]}>
-              {achievement.description}
-            </Text>
-          </View>
-          <View style={styles.achievementPoints}>
-            <Text style={[styles.pointsText, isLocked && styles.lockedText]}>
-              {achievement.points}
-            </Text>
-            <Text style={[styles.pointsLabel, isLocked && styles.lockedText]}>
-              pts
-            </Text>
-          </View>
         </View>
 
-        <View style={styles.achievementFooter}>
-          <View style={[
-            styles.categoryBadge,
-            { backgroundColor: isLocked ? '#ccc' : CATEGORY_COLORS[achievement.category] }
+        <View style={styles.achievementContent}>
+          <Text style={[
+            styles.achievementTitle,
+            isCompleted && styles.achievementTitleCompleted,
+            isLocked && styles.achievementTitleLocked
           ]}>
-            <Text style={styles.categoryText}>
-              {CATEGORY_NAMES[achievement.category]}
-            </Text>
-          </View>
-
-          {!isCompleted && (
-            <View style={styles.progressSection}>
-              {renderProgressBar(achievement)}
+            {achievement.title}
+          </Text>
+          <Text style={[
+            styles.achievementDescription,
+            isLocked && styles.achievementDescriptionLocked
+          ]}>
+            {achievement.description}
+          </Text>
+          {isCompleted && (
+            <View style={styles.achievementFooter}>
+              <Text style={styles.achievementProgressCompleted}>
+                Completed!
+              </Text>
+              {achievement.unlockedDate && (
+                <Text style={styles.completionDate}>
+                  {achievement.unlockedDate.toLocaleDateString()}
+                </Text>
+              )}
             </View>
           )}
-
-          {isCompleted && achievement.unlockedDate && (
-            <Text style={styles.unlockedDate}>
-              Completed {achievement.unlockedDate.toLocaleDateString()}
-            </Text>
+          {isLocked && (
+            <View style={styles.achievementFooter}>
+              <Text style={styles.achievementProgressLocked}>
+                Locked
+              </Text>
+            </View>
           )}
         </View>
       </View>
     );
   };
 
-  const renderCategoryFilter = () => {
-    const categories: (AchievementCategory | 'all')[] = ['all', ...Object.keys(CATEGORY_NAMES) as AchievementCategory[]];
 
+
+  if (!user) {
     return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryFilter}
-        contentContainerStyle={styles.categoryFilterContent}
-      >
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryButton,
-              selectedCategory === category && styles.selectedCategoryButton,
-              category !== 'all' && { backgroundColor: CATEGORY_COLORS[category] }
-            ]}
-            onPress={() => setSelectedCategory(category)}
-          >
-            <Text style={[
-              styles.categoryButtonText,
-              selectedCategory === category && styles.selectedCategoryButtonText
-            ]}>
-              {category === 'all' ? 'All' : CATEGORY_NAMES[category]}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    );
-  };
-
-  return (
-    <View style={styles.container}>
-      {/* Header Stats */}
-      <View style={styles.statsContainer}>
-        <Text style={styles.screenTitle}>Achievements</Text>
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{completedAchievements}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{totalAchievements}</Text>
-            <Text style={styles.statLabel}>Total</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{totalPoints}</Text>
-            <Text style={styles.statLabel}>Points</Text>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorMessage}>Please log in to view achievements</Text>
         </View>
       </View>
+    );
+  }
 
-      {/* Category Filter */}
-      {renderCategoryFilter()}
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading achievements...</Text>
+        </View>
+      </View>
+    );
+  }
 
-      {/* Achievement List */}
-      <ScrollView
-        style={styles.achievementsList}
-        contentContainerStyle={styles.achievementsListContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredAchievements.map(renderAchievementCard)}
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setError(null);
+              // Trigger reload by updating a dependency
+              setLoading(true);
+            }}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Header Stats */}
+        <View style={styles.statsCard}>
+          <Text style={styles.sectionTitle}>Your Progress</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.completedAchievements}</Text>
+              <Text style={styles.statLabel}>Completed</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.totalAchievements}</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Achievement List */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Achievements</Text>
+          <View style={styles.achievementsGrid}>
+            {achievements
+              .sort((a, b) => {
+                // Sort by status: completed first, then unlocked, then locked
+                const statusOrder = { completed: 0, unlocked: 1, locked: 2 };
+                const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+                if (statusDiff !== 0) return statusDiff;
+
+                // If same status, sort by title alphabetically
+                return a.title.localeCompare(b.title);
+              })
+              .map(renderAchievementCard)
+            }
+          </View>
+        </View>
+
+        {/* Bottom Padding */}
+        <View style={styles.bottomPadding} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
-  statsContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  screenTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statBox: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  categoryFilter: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  categoryFilterContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 10,
-    backgroundColor: '#007AFF',
-  },
-  selectedCategoryButton: {
-    backgroundColor: '#333',
-  },
-  categoryButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  selectedCategoryButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  achievementsList: {
+  scrollView: {
     flex: 1,
   },
-  achievementsListContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+  section: {
+    marginHorizontal: 20,
+    marginVertical: 16,
   },
-  achievementCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    width: CARD_WIDTH,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 15,
+  },
+  statsCard: {
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginVertical: 16,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  completedCard: {
-    backgroundColor: '#f8fff8',
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  achievementsGrid: {
+    gap: 12,
+  },
+  achievementCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  achievementCardCompleted: {
+    backgroundColor: '#e8f5e8',
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: '#28a745',
   },
-  lockedCard: {
-    backgroundColor: '#f8f8f8',
+  achievementCardLocked: {
+    backgroundColor: '#f5f5f5',
     opacity: 0.7,
   },
-  achievementHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
   achievementIcon: {
-    fontSize: 32,
-    marginRight: 12,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
-  lockedIcon: {
-    opacity: 0.5,
+  achievementIconCompleted: {
+    backgroundColor: '#28a745',
   },
-  achievementInfo: {
+  achievementIconLocked: {
+    backgroundColor: '#e0e0e0',
+  },
+  achievementEmoji: {
+    fontSize: 24,
+  },
+  achievementContent: {
     flex: 1,
-    marginRight: 12,
   },
   achievementTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
     marginBottom: 4,
+  },
+  achievementTitleCompleted: {
+    color: '#28a745',
+  },
+  achievementTitleLocked: {
+    color: '#999',
   },
   achievementDescription: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 8,
     lineHeight: 20,
   },
-  lockedText: {
+  achievementDescriptionLocked: {
     color: '#999',
   },
-  achievementPoints: {
-    alignItems: 'center',
-  },
-  pointsText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  pointsLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
   achievementFooter: {
-    marginTop: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  categoryBadge: {
+  achievementProgress: {
+    fontSize: 12,
+    color: '#007bff',
+    fontWeight: '500',
+  },
+  achievementProgressCompleted: {
+    color: '#28a745',
+  },
+  achievementProgressLocked: {
+    color: '#999',
+  },
+  completionDate: {
+    fontSize: 10,
+    color: '#28a745',
+    fontStyle: 'italic',
+  },
+  difficultyBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    alignSelf: 'flex-start',
   },
-  categoryText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '500',
+  difficultyText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
   },
-  progressSection: {
+  bottomPadding: {
+    height: 20,
+  },
+  loadingContainer: {
     flex: 1,
-    marginLeft: 12,
-  },
-  progressContainer: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f8f9fa',
   },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#eee',
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 12,
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
     color: '#666',
-    minWidth: 30,
   },
-  unlockedDate: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontStyle: 'italic',
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#dc3545',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
