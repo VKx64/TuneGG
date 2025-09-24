@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -53,6 +54,40 @@ const GAME_MODES: GameMode[] = [
   },
 ];
 
+// Game instructions
+const GAME_INSTRUCTIONS: Record<string, { title: string; instructions: string[] }> = {
+  '1': {
+    title: 'Speed Notes',
+    instructions: [
+      '� Notes will appear on the screen one by one',
+      '� Listen carefully and identify each note as quickly as possible',
+      '⚡ Speed and accuracy both matter for your score',
+      '🏆 Perfect accuracy with fast responses gives the highest points',
+      '📈 Start with easier notes and progress to more challenging ones'
+    ]
+  },
+  '2': {
+    title: 'Memory Challenge',
+    instructions: [
+      '🎵 A sequence of notes will be played for you',
+      '🧠 Listen carefully and memorize the entire sequence',
+      '� Repeat the sequence back in the exact same order',
+      '📏 Sequences get longer as you progress through levels',
+      '🏆 Perfect recall earns maximum points'
+    ]
+  },
+  '3': {
+    title: 'Chord Matching',
+    instructions: [
+      '🎵 You\'ll hear a target chord played',
+      '� Sing or hum to match the chord\'s pitch',
+      '🎯 Try to get as close as possible to the target pitch',
+      '📊 Visual feedback shows how close you are',
+      '🏆 Closer matches earn higher scores'
+    ]
+  }
+};
+
 interface GameAchievementProgress {
   pitchPerfect: boolean;
   allegroArtist: boolean;
@@ -74,6 +109,8 @@ export function Games() {
     totalPoints: 0,
   });
   const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<GameMode | null>(null);
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
 
   // Fetch achievement progress
   const loadAchievementProgress = async () => {
@@ -165,14 +202,32 @@ export function Games() {
         return;
       }
 
-      if (selectedMode.id === '1') {
+      // Show instructions modal
+      setSelectedGame(selectedMode);
+      setShowInstructionsModal(true);
+    }
+  };
+
+  const handleContinueGame = () => {
+    if (selectedGame) {
+      setShowInstructionsModal(false);
+
+      // Navigate to the selected game
+      if (selectedGame.id === '1') {
         navigation.navigate('GameChord' as never);
-      } else if (selectedMode.id === '2') {
+      } else if (selectedGame.id === '2') {
         navigation.navigate('GameMemory' as never);
-      } else if (selectedMode.id === '3') {
+      } else if (selectedGame.id === '3') {
         navigation.navigate('GameSpeed' as never);
       }
+
+      setSelectedGame(null);
     }
+  };
+
+  const handleCancelGame = () => {
+    setShowInstructionsModal(false);
+    setSelectedGame(null);
   };
 
   return (
@@ -279,6 +334,58 @@ export function Games() {
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Instructions Modal */}
+      <Modal
+        visible={showInstructionsModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelGame}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedGame && (
+              <>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalIcon, { color: selectedGame.color }]}>
+                    {selectedGame.icon}
+                  </Text>
+                  <Text style={styles.modalTitle}>
+                    {GAME_INSTRUCTIONS[selectedGame.id]?.title || selectedGame.title}
+                  </Text>
+                  <View style={[styles.modalDifficultyBadge, { backgroundColor: getDifficultyColor(selectedGame.difficulty) }]}>
+                    <Text style={styles.modalDifficultyText}>{selectedGame.difficulty}</Text>
+                  </View>
+                </View>
+
+                <ScrollView style={styles.instructionsContainer} showsVerticalScrollIndicator={false}>
+                  {GAME_INSTRUCTIONS[selectedGame.id]?.instructions.map((instruction, index) => (
+                    <View key={index} style={styles.instructionItem}>
+                      <Text style={styles.instructionText}>{instruction}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={handleCancelGame}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.continueButton, { backgroundColor: selectedGame.color }]}
+                    onPress={handleContinueGame}
+                  >
+                    <Text style={styles.continueButtonText}>Continue</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -443,5 +550,91 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 20,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 20,
+    margin: 20,
+    maxHeight: '80%',
+    width: '90%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  modalIcon: {
+    fontSize: 40,
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalDifficultyBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  modalDifficultyText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  instructionsContainer: {
+    paddingHorizontal: 20,
+    maxHeight: '60%',
+  },
+  instructionItem: {
+    backgroundColor: '#2A2A2A',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  instructionText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    gap: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#404040',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  continueButton: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
