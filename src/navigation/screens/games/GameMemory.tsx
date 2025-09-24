@@ -76,16 +76,16 @@ function getNoteCents(frequency: number): number {
  */
 function notesMatch(detectedNote: { name: NoteName; octave: number } | undefined, targetNote: Note, cents: number): boolean {
   if (!detectedNote || !targetNote) return false;
-  
+
   const nameMatch = detectedNote.name === targetNote.name;
   const octaveMatch = detectedNote.octave === targetNote.octave;
   const centsInTolerance = Math.abs(cents) <= PITCH_TOLERANCE;
-  
+
   // Debug logging
   if (nameMatch && octaveMatch) {
     console.log(`Note match attempt: ${detectedNote.name}${detectedNote.octave} vs ${targetNote.name}${targetNote.octave}, cents: ${cents}, tolerance: ${PITCH_TOLERANCE}, match: ${centsInTolerance}`);
   }
-  
+
   return nameMatch && octaveMatch && centsInTolerance;
 }
 
@@ -246,7 +246,7 @@ export function GameMemory() {
         setScore(prevScore => {
           const newScore = prevScore + 1;
           console.log(`✅ Note ${currentNoteIndex + 1} completed! Score: ${newScore}/${melodySequence.length}`);
-          
+
           // Check if this was the last note in the sequence
           if (currentNoteIndex + 1 >= melodySequence.length) {
             // Round completed successfully
@@ -280,7 +280,7 @@ export function GameMemory() {
               return nextIndex;
             });
           }
-          
+
           return newScore;
         });
 

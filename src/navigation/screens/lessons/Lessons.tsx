@@ -161,7 +161,7 @@ export function Lessons() {
         // Show locked message
         return;
       }
-      
+
       (navigation as any).navigate('LessonFlow', {
         difficulty: selectedLevel.difficulty,
         notes: selectedLevel.notes,
@@ -239,7 +239,7 @@ export function Lessons() {
                 <TouchableOpacity
                   key={level.id}
                   style={[
-                    styles.levelCard, 
+                    styles.levelCard,
                     { backgroundColor: isLocked ? '#cccccc' : level.color },
                     isLocked && styles.lockedCard
                   ]}
@@ -255,9 +255,9 @@ export function Lessons() {
                   <Text style={[styles.levelIcon, isLocked && styles.lockedIcon]}>{level.icon}</Text>
                   <Text style={[styles.levelTitle, isLocked && styles.lockedText]}>{level.title}</Text>
                   <Text style={[styles.levelDescription, isLocked && styles.lockedText]}>
-                    {isLocked 
-                      ? (level.difficulty === 'Medium' 
-                          ? 'Complete Easy lessons first' 
+                    {isLocked
+                      ? (level.difficulty === 'Medium'
+                          ? 'Complete Easy lessons first'
                           : 'Complete Medium lessons first')
                       : level.description
                     }

@@ -142,7 +142,7 @@ export async function hasGameAchievement(achievementType: GameAchievementType): 
     return userAchievements.length > 0;
   } catch (error: any) {
     console.error(`Error checking game achievement ${achievementType}:`, error);
-    
+
     // Log more details about the error
     if (error.status) {
       console.error('Error status:', error.status);
@@ -150,7 +150,7 @@ export async function hasGameAchievement(achievementType: GameAchievementType): 
     if (error.message) {
       console.error('Error message:', error.message);
     }
-    
+
     return false;
   }
 }

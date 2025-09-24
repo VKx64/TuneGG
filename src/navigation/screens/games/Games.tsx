@@ -250,7 +250,7 @@ export function Games() {
                 <TouchableOpacity
                   key={game.id}
                   style={[
-                    styles.gameCard, 
+                    styles.gameCard,
                     { backgroundColor: isLocked ? '#cccccc' : game.color },
                     isLocked && styles.lockedCard
                   ]}
@@ -266,9 +266,9 @@ export function Games() {
                   <Text style={[styles.gameIcon, isLocked && styles.lockedIcon]}>{game.icon}</Text>
                   <Text style={[styles.gameTitle, isLocked && styles.lockedText]}>{game.title}</Text>
                   <Text style={[styles.gameDescription, isLocked && styles.lockedText]}>
-                    {isLocked 
-                      ? (game.difficulty === 'Intermediate' 
-                          ? 'Complete Pitch Matching game first' 
+                    {isLocked
+                      ? (game.difficulty === 'Intermediate'
+                          ? 'Complete Pitch Matching game first'
                           : 'Complete Beginner games first')
                       : game.description
                     }
