@@ -131,18 +131,17 @@ export async function hasGameAchievement(achievementType: GameAchievementType): 
       return false;
     }
 
-    // Check if user has this achievement
-    const userAchievements = await pocketbase.client.collection('user_achievements').getFullList({
-      filter: pocketbase.client.filter('user_id = {:userId} && achievement_id = {:achievementId}', {
-        userId: user.id,
-        achievementId: achievementId
-      }),
-    });
-
-    return userAchievements.length > 0;
+    // Use the existing achievements service which has better error handling
+    const { getAchievementsWithStatus } = await import('../services/achievements');
+    const achievements = await getAchievementsWithStatus(user.id);
+    
+    // Check if the specific achievement is completed
+    const targetAchievement = achievements.find(a => a.id === achievementId);
+    return targetAchievement?.status === 'completed';
+    
   } catch (error: any) {
     console.error(`Error checking game achievement ${achievementType}:`, error);
-
+    
     // Log more details about the error
     if (error.status) {
       console.error('Error status:', error.status);
@@ -150,7 +149,7 @@ export async function hasGameAchievement(achievementType: GameAchievementType): 
     if (error.message) {
       console.error('Error message:', error.message);
     }
-
+    
     return false;
   }
 }

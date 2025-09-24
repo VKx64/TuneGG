@@ -11,7 +11,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAchievementStats, getAchievementsWithStatus } from '../../../services/achievements';
-import { GAME_ACHIEVEMENT_MAP, hasGameAchievement } from '../../../utils/gameAchievements';
+import { GAME_ACHIEVEMENT_MAP } from '../../../utils/gameAchievements';
 
 const { width } = Dimensions.get('window');
 
@@ -87,28 +87,13 @@ export function Games() {
       // Get general achievement stats
       const stats = await getAchievementStats(user.id);
 
-      // Check specific game achievements with individual error handling
-      let pitchPerfect = false;
-      let allegroArtist = false;
-      let risingStar = false;
+      // Get detailed achievements to check game-specific ones
+      const achievements = await getAchievementsWithStatus(user.id);
 
-      try {
-        pitchPerfect = await hasGameAchievement('PITCH_PERFECT');
-      } catch (error) {
-        console.error('Error checking PITCH_PERFECT achievement:', error);
-      }
-
-      try {
-        allegroArtist = await hasGameAchievement('ALLEGRO_ARTIST');
-      } catch (error) {
-        console.error('Error checking ALLEGRO_ARTIST achievement:', error);
-      }
-
-      try {
-        risingStar = await hasGameAchievement('RISING_STAR');
-      } catch (error) {
-        console.error('Error checking RISING_STAR achievement:', error);
-      }
+      // Check which game achievements are completed
+      const pitchPerfect = achievements.some(a => a.id === GAME_ACHIEVEMENT_MAP.PITCH_PERFECT && a.status === 'completed');
+      const allegroArtist = achievements.some(a => a.id === GAME_ACHIEVEMENT_MAP.ALLEGRO_ARTIST && a.status === 'completed');
+      const risingStar = achievements.some(a => a.id === GAME_ACHIEVEMENT_MAP.RISING_STAR && a.status === 'completed');
 
       setAchievementProgress({
         pitchPerfect,
