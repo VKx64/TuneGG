@@ -3,10 +3,10 @@ import { StyleSheet, View, Alert, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { AudioModule } from 'expo-audio';
-import MicrophoneStreamModule, { AudioBuffer } from '../../../modules/microphone-stream';
-import DSPModule from '../../../specs/NativeDSPModule';
-import { useAuth } from '../../contexts/AuthContext';
-import { pocketbase } from '../../services/pocketbase';
+import MicrophoneStreamModule, { AudioBuffer } from '../../../../modules/microphone-stream';
+import DSPModule from '../../../../specs/NativeDSPModule';
+import { useAuth } from '../../../contexts/AuthContext';
+import { pocketbase } from '../../../services/pocketbase';
 
 // Pitch detection parameters
 const BUF_SIZE = 9000;

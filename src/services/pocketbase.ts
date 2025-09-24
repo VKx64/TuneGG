@@ -1,7 +1,6 @@
 import PocketBase, { AsyncAuthStore } from 'pocketbase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import EventSource from 'react-native-sse';
-import { POCKETBASE_CONFIG } from '../config/pocketbase';
 
 // Configure EventSource polyfill for React Native realtime subscriptions
 (global as any).EventSource = EventSource;
@@ -12,8 +11,18 @@ const store = new AsyncAuthStore({
     initial: AsyncStorage.getItem('pb_auth'),
 });
 
+// Get PocketBase URL from environment variables
+const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL;
+
+if (!POCKETBASE_URL) {
+    throw new Error(
+        'EXPO_PUBLIC_POCKETBASE_URL environment variable is required. ' +
+        'Please check your .env file or environment configuration.'
+    );
+}
+
 // Initialize PocketBase client
-const pb = new PocketBase(POCKETBASE_CONFIG.url, store);
+const pb = new PocketBase(POCKETBASE_URL, store);
 
 // User type based on PocketBase auth records
 export interface User {

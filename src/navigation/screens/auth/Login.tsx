@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
-export function Register() {
+export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { register } = useAuth();
+  const { login } = useAuth();
   const navigation = useNavigation();
 
-  const handleRegister = async () => {
-    if (!email || !password || !passwordConfirm) {
-      Alert.alert('Error', 'Please fill in all required fields');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -24,30 +22,18 @@ export function Register() {
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
-      return;
-    }
-
-    if (password !== passwordConfirm) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      await register(email, password, passwordConfirm, name);
+      await login(email, password);
       // Navigation will happen automatically due to auth state change
       // Clear form on success
       setEmail('');
       setPassword('');
-      setPasswordConfirm('');
-      setName('');
 
     } catch (error: any) {
-      console.error('Registration error:', error);
-      Alert.alert('Registration Failed', error.message || 'An error occurred during registration');
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -55,8 +41,8 @@ export function Register() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.registerForm}>
-        <Text style={styles.title}>Register</Text>
+      <View style={styles.loginForm}>
+        <Text style={styles.title}>Login</Text>
 
         <TextInput
           style={styles.input}
@@ -71,16 +57,6 @@ export function Register() {
 
         <TextInput
           style={styles.input}
-          placeholder="Name (optional)"
-          placeholderTextColor="black"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-          autoCorrect={false}
-        />
-
-        <TextInput
-          style={styles.input}
           placeholder="Password"
           placeholderTextColor="black"
           value={password}
@@ -90,35 +66,24 @@ export function Register() {
           autoCorrect={false}
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="black"
-          value={passwordConfirm}
-          onChangeText={setPasswordConfirm}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
         <TouchableOpacity
-          style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
-          onPress={handleRegister}
+          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+          onPress={handleLogin}
           disabled={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="white" size="small" />
           ) : (
-            <Text style={styles.registerButtonText}>Register</Text>
+            <Text style={styles.loginButtonText}>Login</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.loginLink}
-          onPress={() => navigation.navigate('Login' as never)}
+          style={styles.registerLink}
+          onPress={() => navigation.navigate('Register' as never)}
         >
-          <Text style={styles.loginLinkText}>
-            Already have an account? Login here
+          <Text style={styles.registerLinkText}>
+            Don't have an account? Register here
           </Text>
         </TouchableOpacity>
       </View>
@@ -134,7 +99,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     padding: 20,
   },
-  registerForm: {
+  loginForm: {
     width: '100%',
     maxWidth: 400,
     backgroundColor: 'white',
@@ -166,26 +131,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     color: 'black',
   },
-  registerButton: {
+  loginButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
     marginTop: 10,
   },
-  registerButtonDisabled: {
+  loginButtonDisabled: {
     backgroundColor: '#cccccc',
   },
-  registerButtonText: {
+  loginButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  loginLink: {
+  registerLink: {
     marginTop: 20,
     alignItems: 'center',
   },
-  loginLinkText: {
+  registerLinkText: {
     color: '#007AFF',
     fontSize: 16,
     textDecorationLine: 'underline',

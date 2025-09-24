@@ -24,6 +24,24 @@ It includes the following:
 
 3. Edit the `src/App.tsx` file to start working on your app.
 
+## Environment Setup
+
+1. Create your environment file:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file and set your PocketBase server URL:
+
+   ```env
+   # For local development
+   EXPO_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8090
+
+   # For production deployment
+   EXPO_PUBLIC_POCKETBASE_URL=https://your-pocketbase-server.com
+   ```
+
 ## Running the app
 
 - Install the dependencies:

@@ -42,7 +42,7 @@ function MyComponent() {
 
 ### Login Component
 
-The `Login` component (`src/navigation/screens/Login.tsx`) is now fully functional:
+The `Login` component (`src/navigation/screens/auth/Login.tsx`) is now fully functional:
 
 - **Email validation**: Checks for basic email format
 - **Form validation**: Ensures all fields are filled

@@ -17,7 +17,7 @@ import {
   formatPitch,
   formatCents,
   getNoteCents
-} from '../../utils/noteUtils';
+} from '../../../utils/noteUtils';
 
 type GameState = 'setup' | 'playing' | 'finished';
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ActivityIndicator, ScrollView, SafeAreaView } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { pocketbase } from '../../services/pocketbase';
-import { getTitleAndRank, formatExperience, RANKS } from '../../utils/rankingUtils';
+import { useAuth } from '../../../contexts/AuthContext';
+import { pocketbase } from '../../../services/pocketbase';
+import { getTitleAndRank, formatExperience, RANKS } from '../../../utils/rankingUtils';
 
 export function Profile() {
   const { user, logout, isLoading } = useAuth();
