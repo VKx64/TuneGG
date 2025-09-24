@@ -90,7 +90,7 @@ function generateRandomNote(): { name: NoteName; octave: number } {
   return GAME_NOTES[randomIndex];
 }
 
-export function GamePitch() {
+export function GameChord() {
   const navigation = useNavigation();
   const { user, isAuthenticated } = useAuth();
   const [micAccess, setMicAccess] = useState<"pending" | "granted" | "denied">("pending");

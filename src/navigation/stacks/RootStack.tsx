@@ -3,7 +3,7 @@ import { HeaderButton, Text } from '@react-navigation/elements';
 import { HomeTabsStack } from './HomeTabsStack';
 import { Settings } from '../screens/main/Settings';
 import { Achievements } from '../screens/shared/Achievements';
-import { GamePitch } from '../screens/games/GamePitch';
+import { GameChord } from '../screens/games/GameChord';
 import { GameMemory } from '../screens/games/GameMemory';
 import { GameSpeed } from '../screens/games/GameSpeed';
 import { LessonFlow } from '../screens/lessons/LessonFlow';
@@ -42,8 +42,8 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
         ),
       }),
     },
-    GamePitch: {
-      screen: GamePitch,
+    GameChord: {
+      screen: GameChord,
       options: {
         title: "Pitch Matching Game",
         headerShown: true,

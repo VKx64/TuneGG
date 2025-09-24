@@ -5,7 +5,7 @@ export type RootStackParamList = {
   AuthenticatedApp: undefined;
   Settings: undefined;
   Achievements: undefined;
-  GamePitch: undefined;
+  GameChord: undefined;
   GameMemory: undefined;
   GameSpeed: undefined;
   LessonFlow: {

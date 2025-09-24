@@ -29,8 +29,8 @@ interface GameMode {
 const GAME_MODES: GameMode[] = [
   {
     id: '1',
-    title: 'Pitch Matching',
-    description: 'Hit 5 random notes consecutively to win!',
+    title: 'Chord Matching',
+    description: 'Hit 5 random chords consecutively to win!',
     difficulty: 'Beginner',
     color: '#4ECDC4',
     icon: '🎯',
@@ -166,7 +166,7 @@ export function Games() {
       }
 
       if (selectedMode.id === '1') {
-        navigation.navigate('GamePitch' as never);
+        navigation.navigate('GameChord' as never);
       } else if (selectedMode.id === '2') {
         navigation.navigate('GameMemory' as never);
       } else if (selectedMode.id === '3') {
@@ -253,7 +253,7 @@ export function Games() {
                   <Text style={[styles.gameDescription, isLocked && styles.lockedText]}>
                     {isLocked
                       ? (game.difficulty === 'Intermediate'
-                          ? 'Complete Pitch Matching game first'
+                          ? 'Complete Chord Matching game first'
                           : 'Complete Beginner games first')
                       : game.description
                     }

@@ -134,14 +134,14 @@ export async function hasGameAchievement(achievementType: GameAchievementType): 
     // Use the existing achievements service which has better error handling
     const { getAchievementsWithStatus } = await import('../services/achievements');
     const achievements = await getAchievementsWithStatus(user.id);
-    
+
     // Check if the specific achievement is completed
     const targetAchievement = achievements.find(a => a.id === achievementId);
     return targetAchievement?.status === 'completed';
-    
+
   } catch (error: any) {
     console.error(`Error checking game achievement ${achievementType}:`, error);
-    
+
     // Log more details about the error
     if (error.status) {
       console.error('Error status:', error.status);
@@ -149,7 +149,7 @@ export async function hasGameAchievement(achievementType: GameAchievementType): 
     if (error.message) {
       console.error('Error message:', error.message);
     }
-    
+
     return false;
   }
 }
