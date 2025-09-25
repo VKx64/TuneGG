@@ -13,6 +13,9 @@
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_POCKETBASE_URL": "https://tunegg.rimuru.win/"
       }
     }
   },
